@@ -1,7 +1,7 @@
 # api/main.py
 
 from fastapi import FastAPI
-from api.routers import health
+from api.routers import health, claims
 
 app = FastAPI(
     title="ClaimsBridge API",
@@ -10,3 +10,4 @@ app = FastAPI(
 )
 
 app.include_router(health.router)
+app.include_router(claims.router)

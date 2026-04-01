@@ -5,22 +5,22 @@ from api.models.fhir import FHIRClaim, FHIRPatient, FHIRInsurance, FHIRDiagnosis
 
 def hl7_to_fhir(claim: HL7Claim) -> FHIRClaim:
     return FHIRClaim(
-        id=claim.claim_id,
+        id=claim.message_id,
         status="active" if claim.status == "ACCEPTED" else "cancelled",
         patient=FHIRPatient(
             id=claim.patient_id,
-            name=claim.patient_name,
-            birthDate=claim.date_of_birth,
+            name=f"{claim.patient_first} {claim.patient_last}",
+            birthDate=claim.dob,
         ),
         insurance=FHIRInsurance(
-            memberId=claim.member_id,
-            insurer=claim.insurance_company,
+            memberId=claim.patient_id,
+            insurer=claim.payer_id or "unknown",
         ),
         diagnosis=FHIRDiagnosis(
             code=claim.diagnosis_code,
-            description=claim.diagnosis_description,
+            description=claim.diagnosis_code,
         ),
-        totalCharge=claim.total_charge,
-        admissionDate=claim.admission_date,
+        totalCharge=float(claim.claim_amount),
+        admissionDate=claim.service_date,
         sourceMessageId=claim.message_id,
     )
