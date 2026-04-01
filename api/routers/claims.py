@@ -2,10 +2,11 @@
 
 import os
 import json
+from datetime import datetime
 from fastapi import APIRouter, HTTPException
 from api.models.hl7 import HL7Claim
 from api.models.fhir import FHIRClaim
-from api.services.transformer import hl7_to_fhir
+from api.services.transformer import hl7_to_fhir, fhir_to_hl7
 
 router = APIRouter(prefix="/claims", tags=["claims"])
 
@@ -52,3 +53,21 @@ def get_claim_by_id(claim_id: str):
         if claim.id == claim_id:
             return claim
     raise HTTPException(status_code=404, detail=f"Claim {claim_id} not found")
+
+
+@router.post("/", response_model=FHIRClaim, status_code=201)
+def create_claim(claim: FHIRClaim):
+    # Reverse-transform FHIR → HL7
+    hl7_claim = fhir_to_hl7(claim)
+
+    # Write to a new legacy flat file
+    os.makedirs(PROCESSED_DIR, exist_ok=True)
+    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+    filename = f"api_claim_{timestamp}_{hl7_claim.message_id}.json"
+    filepath = os.path.join(PROCESSED_DIR, filename)
+
+    with open(filepath, "w") as f:
+        json.dump([hl7_claim.model_dump()], f, indent=2)
+
+    # Return the original FHIR claim back to the caller
+    return claim

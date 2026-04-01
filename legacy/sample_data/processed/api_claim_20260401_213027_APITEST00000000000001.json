@@ -1,0 +1,19 @@
+[
+  {
+    "message_id": "APITEST00000000000001",
+    "sending_facility": "CLAIMSBRIDGE_API",
+    "timestamp": "",
+    "payer_id": "AETNA",
+    "patient_id": "PAT-TEST-001",
+    "patient_last": "Smith",
+    "patient_first": "John",
+    "dob": "19780615",
+    "gender": "U",
+    "claim_amount": "750.0",
+    "place_of_service": "21",
+    "diagnosis_code": "M54.5",
+    "service_date": "20260401",
+    "status": "ACCEPTED",
+    "errors": []
+  }
+]
