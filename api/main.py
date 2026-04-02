@@ -1,13 +1,13 @@
 # api/main.py
 
 import logging
-import os
 from contextlib import asynccontextmanager
 
 from dotenv import load_dotenv
 load_dotenv()
 
-logging.basicConfig(level=logging.INFO)
+from api.services.logger import configure_logging
+configure_logging()
 
 from fastapi import FastAPI
 from api.routers import claims, health

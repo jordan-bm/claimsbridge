@@ -1,0 +1,19 @@
+[
+  {
+    "message_id": "MSG-16001",
+    "sending_facility": "CLAIMSBRIDGE_API",
+    "timestamp": "",
+    "payer_id": "Aetna",
+    "patient_id": "P16001",
+    "patient_last": "Doe",
+    "patient_first": "John",
+    "dob": "1979-11-22",
+    "gender": "U",
+    "claim_amount": "3100.0",
+    "place_of_service": "21",
+    "diagnosis_code": "I21.9",
+    "service_date": "2026-04-02",
+    "status": "ACCEPTED",
+    "errors": []
+  }
+]

@@ -3,14 +3,36 @@
 import boto3
 import json
 import os
+import sys
 import time
 import logging
+from datetime import datetime, timezone
 from dotenv import load_dotenv
-
 load_dotenv()
 
-logging.basicConfig(level=logging.INFO)
+
+class JSONFormatter(logging.Formatter):
+    def format(self, record: logging.LogRecord) -> str:
+        log_entry = {
+            "timestamp": datetime.now(timezone.utc).isoformat(),
+            "level": record.levelname,
+            "logger": record.name,
+            "message": record.getMessage(),
+        }
+        if record.exc_info:
+            log_entry["exception"] = self.formatException(record.exc_info)
+        return json.dumps(log_entry)
+
+
+handler = logging.StreamHandler(sys.stdout)
+handler.setFormatter(JSONFormatter())
+root = logging.getLogger()
+root.setLevel(logging.INFO)
+root.handlers = []
+root.addHandler(handler)
+
 logger = logging.getLogger(__name__)
+
 
 def get_sqs_client():
     return boto3.client(
@@ -22,12 +44,6 @@ def get_sqs_client():
 
 
 def process_message(message: dict):
-    """
-    Handle a single claim.received event.
-    In a real system this might trigger downstream enrichment,
-    notify a payer, update a reporting DB, etc.
-    For now we log the event and acknowledge it was received.
-    """
     body = json.loads(message["Body"])
     claim_id = body.get("claim_id", "unknown")
     patient_id = body.get("patient_id", "unknown")
@@ -43,19 +59,11 @@ def process_message(message: dict):
         f"total_charge={total_charge} "
         f"published_at={published_at}"
     )
-
-    # Simulate processing work
     time.sleep(0.5)
-
     logger.info(f"[CONSUMER] claim_id={claim_id} processed successfully")
 
 
 def delete_message(client, queue_url: str, receipt_handle: str):
-    """
-    Delete the message from the queue after successful processing.
-    If we don't delete it, SQS will re-deliver it after the visibility timeout.
-    This is the acknowledgement pattern - only delete on success.
-    """
     client.delete_message(
         QueueUrl=queue_url,
         ReceiptHandle=receipt_handle,
@@ -70,11 +78,9 @@ def poll(queue_url: str):
         response = client.receive_message(
             QueueUrl=queue_url,
             MaxNumberOfMessages=10,
-            WaitTimeSeconds=20,  # long polling — waits up to 20s for messages
+            WaitTimeSeconds=20,
         )
-
         messages = response.get("Messages", [])
-
         if not messages:
             logger.info("[CONSUMER] No messages — waiting...")
             continue
@@ -85,7 +91,6 @@ def poll(queue_url: str):
                 delete_message(client, queue_url, message["ReceiptHandle"])
             except Exception as e:
                 logger.error(f"[CONSUMER] Failed to process message — {e}")
-                # Don't delete — SQS will re-deliver after visibility timeout
 
 
 if __name__ == "__main__":
