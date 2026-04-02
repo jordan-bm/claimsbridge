@@ -14,15 +14,15 @@ Here's how it fits together:
 
 ```mermaid
 graph TD
-    Client["REST Client"] -->|"FHIR JSON"| API["FastAPI — Port 8000"]
-    API --> MW["API Key Middleware"]
-    MW -->|"Authorized"| Router["Claims Router"]
-    Router --> TX["Transformer Service\nHL7 ↔ FHIR"]
-    TX --> Legacy["Legacy Flat Files\nHL7 v2"]
-    TX --> DB["PostgreSQL 15"]
-    TX --> SQS["AWS SQS"]
-    SQS --> Worker["SQS Consumer Worker"]
-    API --> CW["AWS CloudWatch"]
+    Client[REST Client] -->|FHIR JSON| API[FastAPI Port 8000]
+    API --> MW[API Key Middleware]
+    MW -->|Authorized| Router[Claims Router]
+    Router --> TX[Transformer Service]
+    TX --> Legacy[Legacy Flat Files HL7 v2]
+    TX --> DB[PostgreSQL 15]
+    TX --> SQS[AWS SQS]
+    SQS --> Worker[SQS Consumer Worker]
+    API --> CW[AWS CloudWatch]
     Worker --> CW
 ```
 
