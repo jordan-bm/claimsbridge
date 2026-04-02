@@ -1,5 +1,8 @@
 # api/main.py
 
+from dotenv import load_dotenv
+load_dotenv()
+
 import os
 import databases
 from fastapi import FastAPI
