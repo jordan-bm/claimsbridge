@@ -8,6 +8,10 @@ from api.models.hl7 import HL7Claim
 from api.models.fhir import FHIRClaim
 from api.services.transformer import hl7_to_fhir, fhir_to_hl7
 from api.services.db import insert_claim
+from api.services.sqs import publish_claim_event
+import logging
+
+logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/claims", tags=["claims"])
 
@@ -34,35 +38,45 @@ def load_all_claims() -> list[FHIRClaim]:
     return claims
 
 
-@router.get("/", response_model=list[FHIRClaim])
-def get_claims():
-    claims = load_all_claims()
-    if not claims:
-        raise HTTPException(status_code=404, detail="No claims found")
-    return claims
+@router.get("/")
+async def list_claims():
+    return load_all_claims()
 
 
-@router.get("/{claim_id}", response_model=FHIRClaim)
-def get_claim_by_id(claim_id: str):
-    claims = load_all_claims()
-    for claim in claims:
+@router.get("/{claim_id}")
+async def get_claim(claim_id: str):
+    all_claims = load_all_claims()
+    for claim in all_claims:
         if claim.id == claim_id:
             return claim
     raise HTTPException(status_code=404, detail=f"Claim {claim_id} not found")
 
 
-@router.post("/", response_model=FHIRClaim, status_code=201)
+@router.post("/")
 async def create_claim(claim: FHIRClaim):
-    # Write to legacy flat file
+    # Step 1 — write to legacy flat file (unchanged)
     hl7_claim = fhir_to_hl7(claim)
-    os.makedirs(PROCESSED_DIR, exist_ok=True)
-    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-    filename = f"api_claim_{timestamp}_{hl7_claim.message_id}.json"
+    timestamp = datetime.utcnow().strftime("%Y%m%d_%H%M%S")
+    filename = f"claim_{claim.id}_{timestamp}.json"
     filepath = os.path.join(PROCESSED_DIR, filename)
+    os.makedirs(PROCESSED_DIR, exist_ok=True)
     with open(filepath, "w") as f:
         json.dump([hl7_claim.model_dump()], f, indent=2)
 
-    # Write to PostgreSQL
+    # Step 2 — write to PostgreSQL
     await insert_claim(claim)
+
+    # Step 3 — publish event to SQS
+    message_id = publish_claim_event(
+        claim_id=claim.id,
+        patient_id=claim.patient.id,
+        insurer=claim.insurance.insurer,
+        total_charge=claim.totalCharge,
+    )
+
+    if message_id:
+        logger.info(f"Claim {claim.id} processed — SQS message_id={message_id}")
+    else:
+        logger.warning(f"Claim {claim.id} processed — SQS publish skipped or failed")
 
     return claim

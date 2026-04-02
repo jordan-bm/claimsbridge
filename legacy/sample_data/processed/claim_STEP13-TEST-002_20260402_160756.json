@@ -1,0 +1,19 @@
+[
+  {
+    "message_id": "MSG-13002",
+    "sending_facility": "CLAIMSBRIDGE_API",
+    "timestamp": "",
+    "payer_id": "BlueCross",
+    "patient_id": "P13002",
+    "patient_last": "Smith",
+    "patient_first": "Jane",
+    "dob": "1985-03-22",
+    "gender": "U",
+    "claim_amount": "1500.0",
+    "place_of_service": "21",
+    "diagnosis_code": "J18.9",
+    "service_date": "2024-01-15",
+    "status": "ACCEPTED",
+    "errors": []
+  }
+]
