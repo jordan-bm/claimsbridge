@@ -1,0 +1,19 @@
+[
+  {
+    "message_id": "STEP11-TEST-001",
+    "sending_facility": "CLAIMSBRIDGE_API",
+    "timestamp": "",
+    "payer_id": "BCBS01",
+    "patient_id": "PAT-STEP11-001",
+    "patient_last": "Doe",
+    "patient_first": "Jane",
+    "dob": "19900101",
+    "gender": "U",
+    "claim_amount": "1250.0",
+    "place_of_service": "21",
+    "diagnosis_code": "I10",
+    "service_date": "20260402",
+    "status": "ACCEPTED",
+    "errors": []
+  }
+]
