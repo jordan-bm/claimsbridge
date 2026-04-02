@@ -4,6 +4,7 @@ import os
 import databases
 from fastapi import FastAPI
 from api.routers import health, claims
+from api.services import db
 
 DATABASE_URL = os.getenv("DATABASE_URL", "postgresql://postgres:postgres@db:5432/claimsbridge")
 
@@ -18,11 +19,13 @@ app = FastAPI(
 @app.on_event("startup")
 async def startup():
     await database.connect()
+    await db.database.connect()
     print("Connected to PostgreSQL")
 
 @app.on_event("shutdown")
 async def shutdown():
     await database.disconnect()
+    await db.database.disconnect()
     print("Disconnected from PostgreSQL")
 
 app.include_router(health.router)
