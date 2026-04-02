@@ -1,37 +1,31 @@
 # api/main.py
 
+import logging
+import os
+from contextlib import asynccontextmanager
+
 from dotenv import load_dotenv
 load_dotenv()
-import logging
+
 logging.basicConfig(level=logging.INFO)
 
-import os
-import databases
 from fastapi import FastAPI
-from api.routers import health, claims
-from api.services import db
+from api.routers import claims, health
+from api.services.db import create_tables, database
+from api.middleware.auth import APIKeyMiddleware
 
-DATABASE_URL = os.getenv("DATABASE_URL", "postgresql://postgres:postgres@db:5432/claimsbridge")
 
-database = databases.Database(DATABASE_URL)
-
-app = FastAPI(
-    title="ClaimsBridge",
-    description="HL7 v2 to FHIR claims modernization API",
-    version="0.3.0",
-)
-
-@app.on_event("startup")
-async def startup():
+@asynccontextmanager
+async def lifespan(app: FastAPI):
     await database.connect()
-    await db.database.connect()
-    print("Connected to PostgreSQL")
-
-@app.on_event("shutdown")
-async def shutdown():
+    create_tables()
+    yield
     await database.disconnect()
-    await db.database.disconnect()
-    print("Disconnected from PostgreSQL")
+
+
+app = FastAPI(title="ClaimsBridge API", lifespan=lifespan)
+
+app.add_middleware(APIKeyMiddleware)
 
 app.include_router(health.router)
 app.include_router(claims.router)

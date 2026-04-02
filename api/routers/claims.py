@@ -27,7 +27,10 @@ def load_all_claims() -> list[FHIRClaim]:
             continue
         filepath = os.path.join(PROCESSED_DIR, filename)
         with open(filepath, "r") as f:
-            records = json.load(f)
+            content = f.read().strip()
+        if not content:
+            continue
+        records = json.loads(content)
         for record in records:
             try:
                 hl7_claim = HL7Claim(**record)
