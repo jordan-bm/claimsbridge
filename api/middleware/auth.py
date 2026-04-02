@@ -6,7 +6,7 @@ from starlette.requests import Request
 from starlette.responses import JSONResponse
 
 
-EXCLUDED_PATHS = {"/health", "/"}
+EXCLUDED_PATHS = {"/health", "/", "/docs", "/openapi.json", "/redoc"}
 
 
 class APIKeyMiddleware(BaseHTTPMiddleware):
